@@ -161,6 +161,10 @@ def main():
                 model, val_loader, criterion, device, config, tgt_vocab.pad_idx
             )
             writer.writerow([epoch, train_loss, val_loss])
+            print(
+                f"epoch {epoch}/{config.epochs} train_loss={train_loss:.4f} val_loss={val_loss:.4f}",
+                flush=True,
+            )
             if val_loss < best_val:
                 best_val = val_loss
                 ckpt_path = os.path.join(
