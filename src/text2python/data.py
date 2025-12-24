@@ -74,6 +74,7 @@ def _get_split(dataset, names):
 
 
 def load_codesearchnet_splits(config):
+    print("Loading dataset...", flush=True)
     dataset = load_dataset("Nan-Do/code-search-net-python")
     train_raw = _get_split(dataset, ["train"])
     if train_raw is None:
@@ -98,10 +99,12 @@ def load_codesearchnet_splits(config):
         train_raw = split["train"]
         test_raw = split["test"]
 
+    print("Filtering splits...", flush=True)
     train_raw = train_raw.filter(_filter_example)
     val_raw = val_raw.filter(_filter_example)
     test_raw = test_raw.filter(_filter_example)
 
+    print("Building examples (length filtering + truncation)...", flush=True)
     train_examples = _build_examples(
         train_raw, config.max_src_len, config.max_tgt_len
     )[: config.train_size]
@@ -111,6 +114,11 @@ def load_codesearchnet_splits(config):
     test_examples = _build_examples(test_raw, config.max_src_len, config.max_tgt_len)[
         : config.test_size
     ]
+
+    print(
+        f"Loaded examples: train={len(train_examples)} val={len(val_examples)} test={len(test_examples)}",
+        flush=True,
+    )
 
     return train_examples, val_examples, test_examples
 
