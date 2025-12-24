@@ -66,11 +66,41 @@ def _build_examples(dataset, max_src_len, max_tgt_len):
     return examples
 
 
+def _get_split(dataset, names):
+    for name in names:
+        if name in dataset:
+            return dataset[name]
+    return None
+
+
 def load_codesearchnet_splits(config):
     dataset = load_dataset("Nan-Do/code-search-net-python")
-    train_raw = dataset["train"].filter(_filter_example)
-    val_raw = dataset["validation"].filter(_filter_example)
-    test_raw = dataset["test"].filter(_filter_example)
+    train_raw = _get_split(dataset, ["train"])
+    if train_raw is None:
+        raise ValueError("Dataset is missing a train split.")
+
+    val_raw = _get_split(dataset, ["validation", "valid", "val"])
+    test_raw = _get_split(dataset, ["test"])
+
+    if val_raw is None:
+        split = train_raw.train_test_split(
+            test_size=max(1, config.val_size) / max(1, (config.train_size + config.val_size)),
+            seed=config.seed,
+        )
+        train_raw = split["train"]
+        val_raw = split["test"]
+
+    if test_raw is None:
+        split = train_raw.train_test_split(
+            test_size=max(1, config.test_size) / max(1, (config.train_size + config.test_size)),
+            seed=config.seed + 1,
+        )
+        train_raw = split["train"]
+        test_raw = split["test"]
+
+    train_raw = train_raw.filter(_filter_example)
+    val_raw = val_raw.filter(_filter_example)
+    test_raw = test_raw.filter(_filter_example)
 
     train_examples = _build_examples(
         train_raw, config.max_src_len, config.max_tgt_len
