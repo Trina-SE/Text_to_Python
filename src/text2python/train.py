@@ -5,6 +5,7 @@ from dataclasses import asdict
 
 import torch
 import torch.nn as nn
+from tqdm import tqdm
 
 from .config import Config
 from .data import (
@@ -46,7 +47,8 @@ def save_checkpoint(path, model, config, src_vocab, tgt_vocab):
 def train_epoch(model, loader, optimizer, criterion, device, config, pad_idx):
     model.train()
     total_loss = 0.0
-    for src, tgt in loader:
+    progress = tqdm(loader, desc="train", leave=False)
+    for step, (src, tgt) in enumerate(progress, start=1):
         src = src.to(device)
         tgt = tgt.to(device)
         optimizer.zero_grad()
@@ -62,6 +64,7 @@ def train_epoch(model, loader, optimizer, criterion, device, config, pad_idx):
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
         total_loss += loss.item()
+        progress.set_postfix(loss=f"{loss.item():.4f}")
     return total_loss / max(1, len(loader))
 
 
@@ -69,7 +72,8 @@ def eval_epoch(model, loader, criterion, device, config, pad_idx):
     model.eval()
     total_loss = 0.0
     with torch.no_grad():
-        for src, tgt in loader:
+        progress = tqdm(loader, desc="eval", leave=False)
+        for src, tgt in progress:
             src = src.to(device)
             tgt = tgt.to(device)
             if config.model_type == "attention":
@@ -81,6 +85,7 @@ def eval_epoch(model, loader, criterion, device, config, pad_idx):
             output_dim = logits.size(-1)
             loss = criterion(logits.reshape(-1, output_dim), tgt[:, 1:].reshape(-1))
             total_loss += loss.item()
+            progress.set_postfix(loss=f"{loss.item():.4f}")
     return total_loss / max(1, len(loader))
 
 
