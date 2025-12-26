@@ -74,7 +74,7 @@ def main():
         )
         pred_tokens = pred_tokens[0].cpu().tolist()
         pred_text_tokens = tgt_vocab.decode(pred_tokens, stop_at_eos=True)
-        attn = attn_weights[0].cpu().numpy()
+        attn = attn_weights[0].detach().cpu().numpy()
         attn = attn[: len(pred_text_tokens), : len(src_tokens) + 2]
         src_labels = ["<sos>"] + src_tokens + ["<eos>"]
         out_path = os.path.join(args.figure_dir, f"attention_{idx}.png")
