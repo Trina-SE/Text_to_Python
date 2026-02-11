@@ -25,3 +25,6 @@ figures/
 build/
 dist/
 *.egg-info/
+
+Final_submission/_pycache__/
+Final_submission/checkpoints/
